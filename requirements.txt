@@ -1,0 +1,5 @@
+vk-api
+ok-api
+python-dotenv
+requests
+loguru
