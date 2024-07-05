@@ -12,10 +12,18 @@ load_dotenv()
 
 class ApiOk:
 
-    def __init__(self):
-        self.token_ok_ru = os.getenv("TOKEN_OK")
-        self.app_key = os.getenv("PUBLIC_KEY")
-        self.secret_key = os.getenv("SECRET_KEY")
+    def __init__(self, token, app_key, secret_key):
+
+        """
+        StarveR api to connect ok.ru
+        :param token: Permanent or temporary application token
+        :param app_key: The public key of the application
+        :param secret_key: Secret key of the application
+        """
+
+        self.token_ok_ru = token
+        self.app_key = app_key
+        self.secret_key = secret_key
         self.api_url = 'https://api.ok.ru/fb.do'
 
     def add_catalog(self, group_id: str, name: str):
@@ -455,6 +463,11 @@ class ApiOk:
 
         return result
 
+    def close(self):
+        self.token_ok_ru = ''
+        self.app_key = ''
+        self.secret_key = ''
+
 
 def add_vk_api(): # NOT USE NOW!
     vk_session = vk_api.VkApi(token=os.getenv('TOKEN'))
@@ -471,12 +484,14 @@ def add_vk_api(): # NOT USE NOW!
 
 
 def add_ok_api():
+    # ok_session = ApiOk(token=os.getenv("TOKEN_OK"), app_key=os.getenv("PUBLIC_KEY"), secret_key=os.getenv("SECRET_KEY"))
+
     # print(ApiOk().update_product_catalogs(os.getenv("GROUP_ID_OK"), '157108075031495', ['157108272032711', '157107714059207']))
     # print(ApiOk().set_status_product('157108288285639', 'ACTIVE'))
     # print(ApiOk().reorder_catalog(os.getenv("GROUP_ID_OK"), '157108272032711', '157107714059207'))
     # print(ApiOk().reorder_product(catalog_id='157107714059207', product_id='157108288023495', after_product_id='157108288285639'))
     # print(ApiOk().add_catalog(os.getenv("GROUP_ID_OK"), 'Exxxaaample123'))
-    # print(ApiOk().add_product(
+    # print(ok_session.add_product(
     #     group_id=os.getenv("GROUP_ID_OK"),
     #     catalog_ids=['157107714059207'],
     #     product_title='Product titleqweqwe',
@@ -494,6 +509,7 @@ def add_ok_api():
     # ))
     # print(ApiOk().edit_catalog(os.getenv('GROUP_ID_OK'), '157107714059207', 'New super name'))
     # print(ApiOk().pin_product('157107714059207', '157108288023495', False))
+    # ok_session.close()
     pass
 
 
