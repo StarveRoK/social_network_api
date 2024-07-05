@@ -469,53 +469,54 @@ class ApiOk:
         self.secret_key = ''
 
 
-def add_vk_api(): # NOT USE NOW!
-    vk_session = vk_api.VkApi(token=os.getenv('TOKEN'))
-    response = vk_session.method(
-        'wall.post',
-        {
-            'message': 'HELLO',
-            'owner_id': f'{os.getenv("GROUP_ID")}',
-            'from_group': '1',
-            'v': f'{os.getenv("API_VERSION")}'
-        })
+# def add_vk_api(): # NOT USE NOW!
+#     vk_session = vk_api.VkApi(token=os.getenv('TOKEN'))
+#     response = vk_session.method(
+#         'wall.post',
+#         {
+#             'message': 'HELLO',
+#             'owner_id': f'{os.getenv("GROUP_ID")}',
+#             'from_group': '1',
+#             'v': f'{os.getenv("API_VERSION")}'
+#         })
 
     # print(response)
 
 
 def add_ok_api():
-    # ok_session = ApiOk(token=os.getenv("TOKEN_OK"), app_key=os.getenv("PUBLIC_KEY"), secret_key=os.getenv("SECRET_KEY"))
+    ok_session = ApiOk(token=os.getenv("TOKEN_OK"), app_key=os.getenv("PUBLIC_KEY"), secret_key=os.getenv("SECRET_KEY"))
 
-    # print(ApiOk().update_product_catalogs(os.getenv("GROUP_ID_OK"), '157108075031495', ['157108272032711', '157107714059207']))
-    # print(ApiOk().set_status_product('157108288285639', 'ACTIVE'))
-    # print(ApiOk().reorder_catalog(os.getenv("GROUP_ID_OK"), '157108272032711', '157107714059207'))
-    # print(ApiOk().reorder_product(catalog_id='157107714059207', product_id='157108288023495', after_product_id='157108288285639'))
-    # print(ApiOk().add_catalog(os.getenv("GROUP_ID_OK"), 'Exxxaaample123'))
-    # print(ok_session.add_product(
+    # ok_session.update_product_catalogs(os.getenv("GROUP_ID_OK"), '157108075031495', ['157108272032711', '157107714059207'])
+    # ok_session.set_status_product('157108288285639', 'ACTIVE')
+    # ok_session.reorder_catalog(os.getenv("GROUP_ID_OK"), '157108272032711', '157107714059207')
+    # ok_session.reorder_product(catalog_id='157107714059207', product_id='157108288023495', after_product_id='157108288285639')
+    # ok_session.add_catalog(os.getenv("GROUP_ID_OK"), 'Exxxaaample123')
+    # ok_session.add_product(
     #     group_id=os.getenv("GROUP_ID_OK"),
     #     catalog_ids=['157107714059207'],
     #     product_title='Product titleqweqwe',
     #     product_description='d' * 1000,
     #     price=10000,
     #     images=[961015062471, 961015062983]
-    # ))
-    # print(ApiOk().get_product(['157108075031495', '157108013820871']))
-    # print(ApiOk().upload_image([Path(r'D:\Desktop\example\WSM00000005195446_orig_03.jpg'), Path(r'D:\Desktop\example\WSM00000005195446_orig_04.jpg')]))
-    # print(ApiOk().delete_product('157107813280711'))
-    # print(ApiOk().delete_catalog(group_id=os.getenv('GROUP_ID_OK'), catalog_id='157108272229319', delete_products=False))
-    # print(ApiOk().edit_product(
+    # )
+    # ok_session.get_product(['157108075031495', '157108013820871'])
+    # ok_session.upload_image([Path(r'D:\Desktop\example\WSM00000005195446_orig_03.jpg'), Path(r'D:\Desktop\example\WSM00000005195446_orig_04.jpg')])
+    # ok_session.delete_product('157107813280711')
+    # ok_session.delete_catalog(group_id=os.getenv('GROUP_ID_OK'), catalog_id='157108272229319', delete_products=False)
+    # ok_session.edit_product(
     #     product_id='157108075031495',
     #     price=18000
-    # ))
-    # print(ApiOk().edit_catalog(os.getenv('GROUP_ID_OK'), '157107714059207', 'New super name'))
-    # print(ApiOk().pin_product('157107714059207', '157108288023495', False))
-    # ok_session.close()
+    # )
+    # ok_session.edit_catalog(os.getenv('GROUP_ID_OK'), '157107714059207', 'New super name')
+    # ok_session.pin_product('157107714059207', '157108288023495', False)
+    ok_session.close()
     pass
 
 
 if __name__ == '__main__':
-    # add_vk_api()
     add_ok_api()
 
+    
+    # add_vk_api()
     # WORK_URL!!! = 'https://oauth.vk.com/authorize?client_id=51985608&redirect_url=https://api.vk.com/blank.html&scope=offline,wall&response_type=token'
     # WORK_URL!!! = 'https://oauth.vk.com/authorize?client_id=51985053&redirect_url=https://api.vk.com/blank.html&scope=offline,wall&response_type=token'
