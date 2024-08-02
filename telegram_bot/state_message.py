@@ -31,6 +31,7 @@ async def set_new_role_by_state(message, key):
             else:
                 message_to_user += err_set_role_f(count, id_)
 
+        logger.info(f'Admin ({message.from_user.id}) set new role "{value}" to id(s) {str(ids)} ')
         return True, message_to_user, None
 
     except Exception as e:
@@ -60,6 +61,7 @@ async def vin_search_by_state(message):
             value=pages
         )
 
+        logger.info(f'Searching trucks for vin "{vin}"')
         return True, text, buttons
 
     except Exception as e:
@@ -68,36 +70,42 @@ async def vin_search_by_state(message):
 
 
 async def change_price_by_state(message):
-    val = message.text.replace(' ', '')
-    db, db_data, db_func_message = await get_state_from_db(message.from_user.id)
+    try:
+        val = message.text.replace(' ', '')
+        db, db_data, db_func_message = await get_state_from_db(message.from_user.id)
 
-    if not val.isdigit():
-        return True, incorrect_summ_t, None
+        if not val.isdigit():
+            return True, incorrect_summ_t, None
 
-    res = await set_one_column(
-        table='trucks',
-        column='price',
-        value=int(val),
-        where_column='id',
-        where_value=int(db_data.name),
-        telegram_id=message.from_user.id
-    )
+        res = await set_one_column(
+            table='trucks',
+            column='price',
+            value=int(val),
+            where_column='id',
+            where_value=int(db_data.name),
+            telegram_id=message.from_user.id
+        )
 
-    db.set_state(
-        func_message_id=db_func_message[0],
-        is_inline_button_enabled=db_func_message[1],
-    )
+        db.set_state(
+            func_message_id=db_func_message[0],
+            is_inline_button_enabled=db_func_message[1],
+        )
 
-    truck = {key: value for key, value in db_data.timing_values}
-    old_price = html.bold(str('{:,}'.format(truck.get('price')).replace(',', ' ')) + "р.")
-    new_price = html.bold(str('{:,}'.format(int(val)).replace(',', ' ')) + "р.")
+        truck = {key: value for key, value in db_data.timing_values}
+        old_price = html.bold(str('{:,}'.format(truck.get('price')).replace(',', ' ')) + "р.")
+        new_price = html.bold(str('{:,}'.format(int(val)).replace(',', ' ')) + "р.")
 
-    if res.get('ans') == 'success':
-        return True, f'{success_new_price_t} c {str(old_price)} на {str(new_price)}', None
-        # return True, success_new_price_t, None
-    if res.get('ans') == 'error':
-        logger.error(res.get('data'))
-        return True, error_t, None
+        logger.info(f'Admin ({message.from_user.id}) set new price "{val}" to truck with id {str(db_data.name)} ')
+        if res.get('ans') == 'success':
+            return True, f'{success_new_price_t} c {str(old_price)} на {str(new_price)}', None
+
+        if res.get('ans') == 'error':
+            logger.error(res.get('data'))
+            return True, error_t, None
+
+    except Exception as e:
+        logger.error(e)
+        return False, None, None
 
 
 async def contact_with_manager_first_step_by_state(message):
@@ -107,6 +115,7 @@ async def contact_with_manager_first_step_by_state(message):
 
         pattern = re.compile(r'^[а-яА-ЯёЁa-zA-Z\s]+$')
 
+        logger.info(f'User ({message.from_user.id}) set new name "{message.text}"')
         if bool(pattern.match(message.text)):
             await set_one_column(
                 table='telegram_user_data',
@@ -163,6 +172,7 @@ async def contact_with_manager_second_step_by_state(message, data, bot):
                 for manager in online_managers:
                     await bot.send_message(chat_id=manager.get('telegram_id'), text=text)
 
+            logger.info(f'User ({message.from_user.id}) ask a question for managers')
             return True, q_in_processing, button_cancel_q
 
         else:

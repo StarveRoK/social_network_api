@@ -42,6 +42,7 @@ async def register_user(message):
             name = message.from_user.full_name
 
         new_user = await register_new_user(int(message.from_user.id), str(name))
+        logger.info(f'Registered new user: {name}')
         return True, welcome_f(message), builder_main_menu(new_user.role_id)
 
     except Exception as e:
@@ -63,9 +64,12 @@ async def user_trucks(message):
                 value=pages,
                 vin=''
             )
+            logger.info(f'User ({message.from_user.id}) get trucks list')
             return True, trucks_title_t + pages_f(pages), buttons
+
         else:
             return False, None, None
+
     except Exception as e:
         logger.error(e)
         return False, None, None
@@ -79,7 +83,9 @@ async def user_profile(message):
 
         if dep:
             db.set_state(func_message_id=db_func_message[0], is_inline_button_enabled=db_func_message[1])
+            logger.info(f'User ({message.from_user.id}) get profile')
             return True, await profile_create(message), None
+
         else:
             return False, None, None
     except Exception as e:
@@ -94,7 +100,9 @@ async def user_settings(message):
 
         if dep:
             db.set_state(func_message_id=db_func_message[0], is_inline_button_enabled=db_func_message[1])
+            logger.info(f'User ({message.from_user.id}) open settings')
             return True, set_title_t, await settings_inline_button(message)
+
         else:
             return False, None, None
 
@@ -110,6 +118,7 @@ async def global_cancel(message):
             func_message_id=db_func_message[0],
             is_inline_button_enabled=db_func_message[1]
         )
+        logger.info(f'User ({message.from_user.id}). GLOBAL CANCELED')
         return True, '🔴 Отмена 🔴', None
 
     except Exception as e:
@@ -125,6 +134,7 @@ async def user_change_name(message):
             func_message_id=db_func_message[0],
             is_inline_button_enabled=db_func_message[1]
         )
+        logger.info(f'User ({message.from_user.id}) try change name')
         return True, 'Введите новое имя:', button_global_cancel_q
 
     except Exception as e:
@@ -154,6 +164,7 @@ async def user_update_name(message):
                 is_inline_button_enabled=db_func_message[1]
             )
 
+            logger.info(f'User ({message.from_user.id}) user change from "{user.name}" to "{message.text}"')
             return True, f'Ваше имя сменено с {html.bold(user.name)} на {html.bold(message.text)}', None
 
         text = 'Вы ввели некорректное имя!\nВы можете использовать только русские и английские буквы!'
@@ -173,7 +184,7 @@ async def user_selected(message):
             tg_id = message.from_user.id
             row = await get_row_in_db('telegram_user_data', 'telegram_id', tg_id, tg_id)
             vins = row.selected_trucks if row.selected_trucks else []
-            print(f'ROW: {row}')
+
             if not vins:
                 return True, no_favorite_t, None
 
@@ -186,10 +197,11 @@ async def user_selected(message):
                 vin=vins,
                 value=pages
             )
-
+            logger.info(f'User ({message.from_user.id}) open selected truck(s)')
             return True, selected_trucks_t + pages_f(pages), buttons
         else:
             return False, None, None
+
     except Exception as e:
         logger.error(e)
         return False, None, None
@@ -218,6 +230,8 @@ async def user_connect_with_manager(message):
                 key='contact_with_manager',
                 value='name'
             )
+
+            logger.info(f'User ({message.from_user.id}) try to connect with manager')
             return True, welcome_t, None
         else:
             return False, None, None
@@ -228,29 +242,41 @@ async def user_connect_with_manager(message):
 # --------------------=============== CALLBACK_QUERY ===============--------------------
 
 
-async def user_close_chat_with_manager(callback_query, bot):
+async def user_close_chat_with_manager(message, bot):
     
     try:
-        db, db_data, db_func_message = await get_state_from_db(callback_query.from_user.id)
-        res = await close_connect_with_manager(db_data.chat_id, int(callback_query.from_user.id))
+        db, db_data, db_func_message = await get_state_from_db(message.from_user.id)
+        res = await close_connect_with_manager(db_data.chat_id, int(message.from_user.id))
         data_row = await get_row_in_db(
             table_name='chats_with_managers',
             column_name='unique_chat_id',
             value=db_data.chat_id,
-            telegram_id=callback_query.from_user.id
+            telegram_id=message.from_user.id
         )
 
         if data_row.manager_tg_id:
-            await bot.send_message(chat_id=data_row.manager_tg_id, text=f'Вопрос был закрыт.')
+            manager_db, manager_db_data, manager_db_func_message = await get_state_from_db(data_row.manager_tg_id)
+            manager_db_data.set_state(
+                key='on_line',
+                func_message_id=manager_db_func_message[0],
+                is_inline_button_enabled=manager_db_func_message[1]
+            )
+
+            await bot.send_message(
+                chat_id=data_row.manager_tg_id,
+                text=f'Вопрос был закрыт.',
+                reply_markup=button_get_manager_question
+            )
 
         if res.get('ans') == 'success':
+            logger.info(f'User ({message.from_user.id}) close connect with manager')
             db.set_state(func_message_id=db_func_message[0], is_inline_button_enabled=db_func_message[1])
-            return True, q_cancel_t, None
+            return True, q_cancel_t, builder_main_menu()
     
         else:
             logger.error(res.get('data'))
             return True, error_t, None
-    
+
     except Exception as e:
         logger.error(e)
         return False, None, None
@@ -261,6 +287,7 @@ async def user_delete_all_selected(callback_query):
     try:
         await delete_all_selected_trucks(int(callback_query.from_user.id))
         await callback_query.answer()
+        logger.info(f'User ({callback_query.from_user.id}) remove all selected trucks')
         return True, select_transport_del_t, None
 
     except Exception as e:
@@ -272,6 +299,7 @@ async def user_change_settings(callback_query):
     try:
         data = callback_query.data.split(' ')
         await change_settings_in_db(int(callback_query.from_user.id), str(data[1]), data[2] == 'True')
+        logger.info(f'User ({callback_query.from_user.id}) try to change settings')
         return True, set_title_t, await settings_inline_button(callback_query)
 
     except Exception as e:
@@ -286,7 +314,7 @@ async def user_change_page(callback_query):
         turn = data_get[1]
         db, db_data, db_func_message = await get_state_from_db(callback_query.from_user.id)
         pages = db_data.value
-        print(db_data)
+
         if str(pages[0]) == "1" and str(pages[1]) == "1":
             return False, None, None
 
@@ -324,6 +352,8 @@ async def user_change_page(callback_query):
 
         if 'selected' not in data_get:
             text += vin_f(vin)
+
+        logger.info(f'User ({callback_query.from_user.id}) change page')
         return True, text, buttons
 
     except Exception as e:
@@ -351,6 +381,7 @@ async def user_clear_vin(callback_query):
             vin=''
         )
 
+        logger.info(f'User ({callback_query.from_user.id}) clear vin')
         return True, trucks_title_t + pages_f(pages), buttons
 
     except Exception as e:
@@ -366,6 +397,8 @@ async def user_vin_search(callback_query):
             is_inline_button_enabled=db_func_message[1],
             key='vin_search'
         )
+
+        logger.info(f'User ({callback_query.from_user.id}) write vin to found')
         return True, found_by_vin_t, None
 
     except Exception as e:
@@ -392,6 +425,7 @@ async def user_truck_search(callback_query):
             is_inline_button_enabled=db_func_message[1]
         )
 
+        logger.info(f'User ({callback_query.from_user.id}) search trucks by vin')
         if images:
             img = images[randint(0, len(images) - 1)]
             buttons = await button_menu_in_truck_card(favorite_trucks, truck, user)
@@ -408,6 +442,7 @@ async def user_truck_search(callback_query):
     
 async def user_back_to_truck_list(callback_query):
     try:
+        logger.info(f'User ({callback_query.from_user.id}) back to truck list')
         return True, callback_query.message.chat.id, callback_query.message.message_id
     except Exception as e:
         logger.error(e)
@@ -429,9 +464,11 @@ async def user_add_to_favorite(callback_query):
             favorite_trucks = user.selected_trucks if isinstance(user.selected_trucks, list) else []
 
             text = callback_query.message.caption.replace('\n---', '⭐️\n---')
+            logger.info(f'User ({callback_query.from_user.id}) selected truck')
             return True, text, await button_menu_in_truck_card(favorite_trucks, truck, user)
 
         else:
+            logger.info(f'User ({callback_query.from_user.id}) cant selected trucks. Error {result.get("data")}')
             return True, error_t, None
             
     except Exception as e:
@@ -454,9 +491,11 @@ async def user_remove_from_favorite(callback_query):
             favorite_trucks = user.selected_trucks if isinstance(user.selected_trucks, list) else []
 
             text = callback_query.message.caption.replace('⭐️\n---', '\n---')
+            logger.info(f'User ({callback_query.from_user.id}) unselected truck')
             return True, text, await button_menu_in_truck_card(favorite_trucks, truck, user)
 
         else:
+            logger.info(f'User ({callback_query.from_user.id}) cant unselected trucks. Error {result.get("data")}')
             return True, error_t, None
 
     except Exception as e:
@@ -487,10 +526,11 @@ async def send_message_to_manager(message, bot):
     )
 
     manager_id = info.manager_tg_id
-
     if manager_id:
+        logger.info(f'User ({message.from_user.id}) send message to manager ({manager_id})')
         await bot.send_message(chat_id=manager_id, text=f'{html.bold(info.user_name)}: {message.text}')
     else:
+        logger.info(f'User ({message.from_user.id}) send message to manager (manager not connected now)')
         ms = await message.answer(text=f'Менеджер еще не подключился. \nНо мы ему передадим все что вы написали 😊')
         await update_state(message, ms, bot)
     return True

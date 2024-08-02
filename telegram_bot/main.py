@@ -74,7 +74,7 @@ async def connect_with_manager(message: types.Message):
 
 @dp.message(F.text == "Выйти на линию")
 async def go_online(message: types.Message):
-    result, text, buttons = await manager_online(message)
+    result, text, buttons = await manager_on_off_line(message, True)
     if result:
         ms = await message.answer(text=text, reply_markup=buttons)
         await update_state(message, ms, bot)
@@ -82,7 +82,7 @@ async def go_online(message: types.Message):
 
 @dp.message(F.text == "Выйти с линии")
 async def go_offline(message: types.Message):
-    result, text, buttons = await manager_offline(message)
+    result, text, buttons = await manager_on_off_line(message, False)
     if result:
         ms = await message.answer(text=text, reply_markup=buttons)
         await update_state(message, ms, bot)
@@ -134,6 +134,13 @@ async def close_question_m(message: types.Message):
     if result:
         ms = await message.answer(text=text, reply_markup=buttons)
         await update_state(message, ms, bot)
+
+
+@dp.message(F.text == '🟢 Вопрос решен 🟢')
+async def close_chat_with_manager(message: types.Message):
+    result, text, buttons = await user_close_chat_with_manager(message, bot)
+    if result:
+        await message.answer(text=text, reply_markup=buttons)
 
 
 @dp.message()
@@ -216,14 +223,6 @@ async def other_message(message: types.Message):
 
 
 # --------------------=============== CALLBACK_QUERY ===============--------------------
-
-
-@dp.callback_query(F.data.in_("close_chat_with_manager"))
-async def close_chat_with_manager(callback_query: types.callback_query):
-    result, text, buttons = await user_close_chat_with_manager(callback_query, bot)
-    if result:
-        await callback_query.message.edit_text(text=text, reply_markup=buttons)
-
 
 @dp.callback_query(F.data.in_("global_cancel"))
 async def global_cancel_(callback_query: types.callback_query):
